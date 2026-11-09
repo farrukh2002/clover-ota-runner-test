@@ -26,6 +26,39 @@ jobs:
 
            printf '\n=== Java ===\n'
            java -version 2>&1 || true
+     - run:
+         name: Download and validate build 1 from Gofile
+         no_output_timeout: 15m
+         command: |
+           set -euo pipefail
+           artifact="$(mktemp /tmp/clover-ota-XXXXXX.zip)"
+           trap 'rm -f "$artifact"' EXIT
+           curl --fail --location --silent --show-error \
+             --connect-timeout 20 --max-time 600 \
+             --max-filesize 5368709120 \
+             --output "$artifact" \
+             --write-out '\nHTTP status: %{http_code}\nDownloaded bytes: %{size_download}\nDownload seconds: %{time_total}\nAverage bytes/s: %{speed_download}\n' \
+             'https://store-eu-par-13.gofile.io/download/web/e2488a04-f65d-48a9-b2e1-f3387ffe569b/CloverProject-4.0-20261109-OFFICIAL-peridot-GMS.zip'
+           python3 - "$artifact" <<'PY'
+           import hashlib
+           import os
+           import sys
+           import zipfile
+
+           path = sys.argv[1]
+           with zipfile.ZipFile(path) as archive:
+               if "payload.bin" not in archive.namelist():
+                   raise SystemExit("FAIL: ZIP does not contain payload.bin")
+               bad = archive.testzip()
+               if bad is not None:
+                   raise SystemExit(f"FAIL: ZIP CRC check failed for {bad}")
+               print(f"ZIP entries: {len(archive.infolist())}")
+           with open(path, "rb") as stream:
+               digest = hashlib.file_digest(stream, "sha256").hexdigest()
+           print(f"File size: {os.path.getsize(path)} bytes")
+           print(f"SHA-256: {digest}")
+           print("PASS: full OTA downloaded and ZIP CRC checks passed")
+           PY
 
 workflows:
  resource-check:
