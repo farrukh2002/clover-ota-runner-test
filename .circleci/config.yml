@@ -39,7 +39,7 @@ jobs:
              --output "$artifact" \
              --write-out '\nHTTP status: %{http_code}\nDownloaded bytes: %{size_download}\nDownload seconds: %{time_total}\nAverage bytes/s: %{speed_download}\n' \
              'https://store-eu-par-13.gofile.io/download/web/e2488a04-f65d-48a9-b2e1-f3387ffe569b/CloverProject-4.0-20261109-OFFICIAL-peridot-GMS.zip'
-           python3 - "$artifact" <<'PY'
+           python3 - "$artifact" \<<'PY'
            import hashlib
            import os
            import sys
