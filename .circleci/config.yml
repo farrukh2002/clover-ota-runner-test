@@ -1,0 +1,33 @@
+version: 2.1
+
+jobs:
+ check-runner:
+   machine:
+     image: ubuntu-2404:current
+   resource_class: large
+   steps:
+     - run:
+         name: Check CPU, RAM, storage, and tools
+         command: |
+           printf '\n=== Architecture ===\n'
+           uname -m
+
+           printf '\n=== Available CPU cores ===\n'
+           nproc
+
+           printf '\n=== Memory ===\n'
+           free -h
+
+           printf '\n=== Disk space ===\n'
+           df -h / /tmp "$HOME"
+
+           printf '\n=== Python ===\n'
+           python3 --version
+
+           printf '\n=== Java ===\n'
+           java -version 2>&1 || true
+
+workflows:
+ resource-check:
+   jobs:
+     - check-runner
